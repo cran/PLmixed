@@ -6,9 +6,9 @@
 \usage{
 PLmixed(formula, data, family = gaussian, load.var, lambda = NULL,
   factor = NULL, init = 1, nAGQ = 1, method = "L-BFGS-B",
-  lme4.optimizer = "bobyqa", lme4.start = NULL, lme4.optCtrl = list(),
-  opt.control = NULL, REML = FALSE, SE = 1, ND.method = "simple",
-  est = TRUE)
+  lower = -Inf, upper = Inf, lme4.optimizer = "bobyqa",
+  lme4.start = NULL, lme4.optCtrl = list(), opt.control = NULL,
+  REML = FALSE, SE = 1, ND.method = "simple", est = TRUE)
 }
 \arguments{
 \item{formula}{A formula following that of \pkg{\link{lme4}}, with the addition that factors can be specified
@@ -32,9 +32,13 @@ If a vector, the values apply in row by column by matrix order.}
 
 \item{nAGQ}{If family is non-gaussian, the number of points per axis for evaluating the adaptive
 Gauss-Hermite approximation to the log-likelihood. Defaults to \code{1}, corresponding to the Laplace approximation.
-See \pkg{\link{glmer}}.}
+See \code{\link{glmer}}.}
 
 \item{method}{The \code{\link{optim}} optimization method. Defaults to \code{L-BFGS-B}.}
+
+\item{lower}{Lower bound on lambda parameters if \code{method = "L-BFGS-B"}.}
+
+\item{upper}{Upper bound on lambda parameters if \code{method = "L-BFGS-B"}.}
 
 \item{lme4.optimizer}{The \pkg{\link{lme4}} optimization method.}
 
@@ -60,7 +64,7 @@ using \code{object$'lme4 Model'}, where \code{object} is an object of class \cod
 }
 \description{
 Fit a (generalized) linear mixed effects model (GLMM) with factor structures. Utilizes both the
-\pkg{\link{lme4}} and \code{\link{optim}} packages for estimation using a profile-likelihood based
+\pkg{\link{lme4}} package and \code{\link{optim}} function for estimation using a profile-likelihood based
 approach.
 }
 \details{
@@ -96,7 +100,7 @@ IRTsub <- IRTsub[sample(nrow(IRTsub), 300), ] # Randomly sample 300 responses
 IRTsub <- IRTsub[order(IRTsub$item), ] # Order by item
 irt.lam = c(1, NA, NA) # Specify the lambda matrix
 
-# Below, the # in front of family = binomial can be used to change the response distribution
+# Below, the # in front of family = binomial can be removed to change the response distribution
 # to binomial, where the default link function is logit.
 
 irt.model <- PLmixed(y ~ 0 + as.factor(item) + (0 + abil.sid |sid) +(0 + abil.sid |school),

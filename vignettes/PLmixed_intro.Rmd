@@ -1,0 +1,145 @@
+---
+title: "PLmixed: An Introduction"
+author: |
+  | Nicholas Rockwood, The Ohio State University (rockwood.19@osu.edu)
+  | Minjeong Jeon, University of California, Los Angeles (mjjeon@ucla.edu)
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{PLmixed: An Introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+bibliography: biblio.bib
+nocite: | 
+  @R
+---
+
+
+The purpose of `PLmixed` is to extend the capabilities of `lme4` [@lme4] to allow factor structures (i.e., factor loadings, weights, discrimination parameters) to be freely estimated. Thus, for instance, factor analysis and item response theory models with multiple hierarchical levels and/or crossed random effects can be estimated using code that requires little more input than that required by `lme4`. All of the strengths of `lme4`, including the ability to add (possibly random) covariates and an arbitrary number of crossed random effects, are encompassed within `PLmixed`. In fact, `PLmixed` uses `lme4` and `optim` [@byrd1995] to estimate the model using nested maximizations. Details of this approach can be found in @jeon2012. A manuscript documenting the use of `PLmixed` is currently in preparation. 
+
+## Installation
+
+`PLmixed` can be installed from CRAN with:
+
+```{r cran-installation, eval = FALSE}
+install.packages("PLmixed")
+```
+
+
+## KYPS Example
+Once loaded, `PLmixed` can be called using the function `PLmixed`. Following is an example using a dataset simulated from a `PLmixed` model fit using data from the Korean Youth Panel Survey (KYPS), where students' self-esteem was measured over four time points. The first two time points occurred when the students were in middle school, and the final two time points occurred during high school. Further details about the original dataset can be found in @jeon2012, which includes the original analysis for this example. The first six rows of the dataset `KYPSsim`, which can be found in the `PLmixed` package, is displayed below.
+```{r load-data}
+library("PLmixed")
+head(KYPSsim)
+```
+
+The interest of the analysis is on modeling the effect of middle school and high school membership on the students' self-esteem over time. Specifically, we model the self-esteem at time $t$ from students $s$ who attended middle school $m$ and high school $h$ as 
+\[
+y_{tsmh} = \beta_t + \lambda_t^{(m)}\eta^{(m)} + \lambda_t^{(h)}\eta^{(h)}  + \eta^{(s)} + \epsilon_{tsmh}
+\]
+where $\beta_t$ are fixed time effects, $\eta^{(m)} \sim N(0, \psi^2_m)$, $\eta^{(h)} \sim N(0, \psi^2_h)$, $\eta^{(s)} \sim N(0, \psi^2_s)$, and $\epsilon_{itsmh} \sim N(0, \sigma^2_{\epsilon})$. Additional covariates with fixed or random effects can also be included in the model. In this formulation, the middle school and high school effects are cross-classified random effects with time-dependent weights $\lambda_t^{(m)}$ and $\lambda_t^{(h)}$, respectively. For example, $\lambda_1^{(m)}$ quantifies the relationship between the middle school factor and students' self-esteem at time one. Values close to zero would indicate that there is little effect of middle school membership on self-esteem at this time point. As a standard GLMM, these time dependent weights would have to be known a priori. If known, the model could be estimated using the `lmer` function from `lme4` as 
+`lmer(esteem ~ as.factor(time) + (0 + ms_weight | mid) + (0 + hs_weight | hid) + (1 | sid), data = KYPSsim)`,
+where `ms_weight` and `hs_weight` are known covariates containing the middle school and high school weights. 
+
+In constrast, `PLmixed` allows these weights to be freely estimated. To do so, we must specify a `lambda` matrix, which will contain the factor structure. For this example, we need a separate loading for each factor (`ms` and `hs`) at each time point. We can check the unique time points in the dataset:
+```{r time-points}
+unique(KYPSsim$time)
+```
+Thus, the lambda matrix needs 4 rows and 2 columns (time x factors). Following the analysis of @jeon2012, it is assumed that high school membership does not influence self-esteem at the middle school time points (times 1 and 2), so these loadings are constrained to zero. Further, the first non-zero loading for each factor is constrained to one to identify the model, since the variances of the factors will be freely estimated.
+
+```{r create-lambda}
+kyps.lam <- rbind(c( 1,  0),
+                  c(NA,  0),
+                  c(NA,  1),
+                  c(NA, NA))
+
+```
+Here, the `NA`s are used to specify loadings that should be freely estimated. The numbers are constraints. Thus, the first loading for the first factor is constrainted to one, and the other three are freely esitmated. The first two loadings of the second factor are constrained to zero, the third is constrained to one, and the fourth is freely estimated. 
+
+We fit the model in `PLmixed` using
+
+```{r fit-kyps-model, results = "hide"}
+ kyps.model <- PLmixed(esteem ~ as.factor(time) +  (0 + hs | hid)   
+                       + (0 + ms | mid) + (1 | sid), data = KYPSsim,  
+                       factor = list(c("ms", "hs")), load.var = "time",
+                       lambda = list(kyps.lam))
+```
+
+This follows a similar syntax as that for `lme4` except we've included the `lambda` matrix we previously constructed, a `factor` argument, and a `load.var` argument. `load.var` contains the name of the variable in which the factor loadings correspond to (i. e., the variable that identifies the rows in `lambda`). If there is more than one `load.var`, these are provided in a character vector. The `factor` argument names the factors corresponding to the columns of `lambda`. Here, we specify `ms` and `hs`, corresponding to middle school and high school factors. They are provided in the same order as the columns of `lambda`. Note that these are specified in the same character vector within a list. If there is more than one matrix listed for `lambda`, there should be multiple character vectors listed for `factor`, where each character vector corresponds to each `lambda matrix`. Finally, any factors specified using `factor` can be included as random effects within the `PLmixed` `formula`. Here we have included `hs` as a random effect (i.e. factor) that varies over `hid`, and `ms` is a random effect that varies over `mid`.
+
+The parameter estimates can be found using `summary()`. 
+
+```{r kyps-summary}
+summary(kyps.model)
+```
+
+The summary contains all of the usual `lme4` output, as well as the estimated `lambda` matrix and some details corresponding to the estimation at the bottom. Looking at the lambda matrix, we see that the middle school effect decreased over time, while the high school effect increased from time three to time four. The fixed effects section contains the estimated mean self-esteem score for students at time 1, as well as mean differences between the other three time points and time one. On average, self-esteem scores increased over time.
+
+*It should be noted that the estimation time printed in this document is not an accurate representation of the true time required to fit the model. Because this document is created using Rmarkdown, other processes are involved during the evaluation (and timing) of the code. Using the same computer used to generate the Rmarkdown file, but outside of the Rmarkdown environment, the estimation took approximately 1.5 minutes.*
+
+
+## Multilevel 2PL IRT Example
+
+Following is an example using the dataset `IRTsim` available within the package. The dataset contains 4 variables and a total of 2500 item responses. `sid` is a student ID ($n_{sid} = 500$), `school` is a school ID ($n_{school} = 26$), `item` is an item ID, and `y` is a dichotmous response to the item. The dataset was simulated using the parameter estimates from a fitted multilevel 2PL IRT model. Further details corresponding to the data generation will be found in our in-preparation paper.  
+
+```{r}
+library("PLmixed")
+head(IRTsim)
+```
+
+We are interested in estimating a common factor, or latent variable, that varies at the student and school level. This is a three level model, as item responses are nested within students, which are nested within schools. With the constraint that all factor loadings equal one, the model can be estimated using the `lme4` package, with the code `[g]lmer(y ~ 0 + as.factor(item) + (1 | sid) + (1 | school),...` where the latent ability is operationalized as a random intercept which varies at the student and school levels. This corresponds to:
+\[
+g(\mu_{spi}) = \beta_i + \theta_p + \theta_s
+\]
+where  $g(.)$ is a link function, $\mu_{spi}$ is the conditional mean response of person $p$ in school $s$ to item $i$, $\theta_p \sim N(0, \psi^2_{p})$ is a student-level random effect/factor and $\theta_s \sim N(0, \psi^2_{s})$ is a school-level random effect/factor.This is a multilevel 1PL IRT model because the factor loadings for $\theta_p$ and $\theta_s$ are constrained to one. 
+
+A multilevel 2PL IRT model with equal factor loadings (for the student and school factors) based on measurement invariance can be expressed as
+\[
+g(\mu_{spi}) = \beta_i + \lambda_i(\theta_p + \theta_s)
+\]
+\[
+= \beta_i + \lambda_i\theta_p + \lambda_i\theta_s.
+\]
+
+`PLmixed` can also allow for the factor loadings at each level to be freely estimated to test for measurement invariance, but for the purpose of this example we will be working under the assumption that the loadings are equal across the two levels. To begin, we identify the number of items in the dataset. 
+
+```{r}
+IRTsim <- IRTsim[order(IRTsim$item), ] # Order by item
+unique(IRTsim$item)
+```
+
+Since there are five items and only one factor of interest (which varies at two levels), we can set up the factor loading matrix, `lambda`, as a vector of length 5. The first loading is constrained to one for identification purposes since the variances of the random effects will be estimated. The other loadings are freely estimated, as specified using `NA`.
+
+```{r}
+irt.lam = c(1, NA, NA, NA, NA) # Specify the lambda matrix
+```
+
+We use the `load.var` command to specify what each element of `lambda` corresponds to. Since there is a separate loading for each item, the `item` identification variable is used. The `lambda` argument specifies a list of `lambda` matrices. For this example, there is only one matrix. The `factor` argument names each of the factors that are being modeled. There is only one factor in this model, which corresponds to the first (and only) column of the first (and only) `lambda` matrix, so it is listed in the first element of the first character vector privided in a list for the `factor` argument. We name this factor `ability` and replace the random intercepts in the model `formula` with the factor (and omit the intercepts using `0 + `). We also add the argument `family = binomial`, which will result in the binomial family with a logit link function being used (by default). This option is more appropriate for this example since the item responses are dichotomous and we are interested in a 2-parameter logistic IRT model. The fitted model is saved into the object `irt.model`.
+
+```{r, results = "hide"}
+irt.model <- PLmixed(y ~ 0 + as.factor(item) + (0 + ability | sid) + (0 + ability | school),
+                     data = IRTsim, load.var = c("item"), family = binomial,
+                     factor = list(c("ability")), lambda = list(irt.lam))
+```
+```{r}
+summary(irt.model)
+```
+
+Within the (extended) GLMM formulation, the model is specified as $\beta_i + \lambda_i\theta_p$, where $\beta_i$ is the intercept for item $i$, $\lambda_i$ is the loading for item $i$, and $\theta_p$ is the person ability level for person $p$. To transform the item intercepts into item difficulty parameters from the parameterization $\lambda_i(\theta_p - \beta_i^*)$, we can calculate $\beta_i^* = -\beta_i/\lambda_i$ for each item.
+
+```{r}
+betas <- irt.model$'Fixed Effects'[, 1]
+lambdas <- irt.model$Lambda$lambda.item[, 1]
+(beta.difficulty <- -betas/lambdas)
+```
+
+We can easily plot the item characteristic curves using the `irtoys` package [@irtoys]. The item characteristic curve plots the predicted probability of a correct response ($y$-axis) to a given item (or set of items) for a range of ability levels ($x$-axis).
+
+```{r, message = FALSE}
+library("irtoys")
+```
+```{r, fig.width = 5, fig.height = 5}
+item.params <- cbind(lambdas, beta.difficulty, rep(0, 5))
+plot(irf(item.params), co = NA, label = TRUE)
+```
+
+## References

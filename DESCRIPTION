@@ -1,7 +1,7 @@
 Package: PLmixed
 Title: Estimate (Generalized) Linear Mixed Models with Factor
         Structures
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: c(person("Minjeong", "Jeon", role = "aut"),
     person("Nicholas", "Rockwood", email = "rockwood.19@osu.edu", role = c("aut", "cre")))
 Description: Utilizes the 'lme4' package and the optim() function from 'stats'
@@ -13,14 +13,16 @@ Description: Utilizes the 'lme4' package and the optim() function from 'stats'
     making it useful for multilevel and cross-classified models.
 Depends: R (>= 3.2.2)
 Imports: lme4, Matrix (>= 1.1.1), numDeriv, stats
+Suggests: knitr, rmarkdown, irtoys
+VignetteBuilder: knitr
 Encoding: UTF-8
 License: GPL (>= 2)
 LazyData: true
 RoxygenNote: 6.0.1.9000
 NeedsCompilation: no
-Packaged: 2017-07-18 19:42:03 UTC; nickrockwood
+Packaged: 2017-08-31 16:39:10 UTC; nickrockwood
 Author: Minjeong Jeon [aut],
   Nicholas Rockwood [aut, cre]
 Maintainer: Nicholas Rockwood <rockwood.19@osu.edu>
 Repository: CRAN
-Date/Publication: 2017-07-18 21:49:57 UTC
+Date/Publication: 2017-08-31 19:30:31 UTC
