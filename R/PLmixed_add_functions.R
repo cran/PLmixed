@@ -31,11 +31,13 @@ summary.PLmod <- function(object, ...){
                         "Optim Iterations" = object$'Total Iterations',
                         "Estimation Time" = object$'Estimation Time',
                         "Lambda" = object$'Lambda',
+                        "nlp" = object$'nlp',
                         "load.var" = object$'Load.Var',
                         "Random Effects" = object$'Random Effects',
                         "Fixed Effects" = object$'Fixed Effects',
                         "Details" = details,
                         "Residuals" = residuals(object),
+                        "Scaled Residuals" = residuals(object, scale = TRUE),
                         "Param" = object$'Param',
                         "Optimizer" = object$'Optimizer')
   class(return.object) <- append("summary.PLmod", class(return.object))
@@ -67,12 +69,19 @@ print.summary.PLmod <- function(x, digits = 4, ...){
   aictab <- unlist(object$'Fit')
   .prt.aictab(aictab, digits = 2)
   cat("\n")
-  .prt.resids(object$'Residuals', digits = digits)
-  for (i in 1:length(object$'Lambda')){
-    lam <- as.data.frame(object$'Lambda'[[i]])
-    cat("Lambda: ", object$'load.var'[i], "\n")
-    print(lam, digits = digits)
+  .prt.resids(object$'Scaled Residuals', digits = digits)
+  if(!is.null(object$'nlp')){
+    cat("Nonlinear Parameters: \n")
+    print(object$'nlp', digits = digits)
     cat("\n")
+  }
+  if(!is.null(object$'Lambda')){
+    for (i in 1:length(object$'Lambda')){
+      lam <- as.data.frame(object$'Lambda'[[i]])
+      cat("Lambda: ", object$'load.var'[i], "\n")
+      print(lam, digits = digits)
+      cat("\n")
+    }
   }
   .prt.VC(object$'Random Effects', comp = c("Var", "Std.Dev."), digits = digits)
   .prt.grps(ngrps = object$'Details'$'ngrps', nobs = object$'Details'$'nobs')

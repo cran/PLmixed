@@ -1,7 +1,7 @@
-0f900abfcf251569f97727da55f5cad5 *DESCRIPTION
+e9002cfe6d6e9d542081610f912ce31f *DESCRIPTION
 3e7357169f5df2bf2d651b0f837f463c *NAMESPACE
-66ef9913bfac577b2a085fc4d30a8927 *R/PLmixed_add_functions.R
-a1d82a7f856e85105999d1db6f253560 *R/PLmixed_main_function.R
+81a2cfa05d7b938fdaa6023b6aa79155 *R/PLmixed_add_functions.R
+0a2f840dadf3921e1a84490900fafd26 *R/PLmixed_main_function.R
 6797a2ab8796eb24f28d62f2b0b6f18e *README.md
 8f0297baa7f2e0717b607e057911ea4d *build/vignette.rds
 c658ff781aeff9b60d528ea96ef0d32d *data/IRTsim.rda
@@ -11,13 +11,13 @@ c658ff781aeff9b60d528ea96ef0d32d *data/IRTsim.rda
 aa48c42a4661ee5f8e20b83e58c82f0e *data/datalist
 7d7bb40f2903acbcae27e3f45c722cf5 *inst/doc/PLmixed_intro.R
 e372ba86bdf0f8d497c72cbb121ff86d *inst/doc/PLmixed_intro.Rmd
-f86ec9b73724f40fd3be5b20735b4940 *inst/doc/PLmixed_intro.html
+eeea527e3477e9fc734255feb88d59db *inst/doc/PLmixed_intro.html
 94c71cefb660423db8febe39ca510744 *man/IRTsim.Rd
 3f296b90f58daee2c553ed2e6b582b95 *man/JUDGEsim.Rd
 ee761fc88038d1ec6625b2e12993c9f1 *man/KYPSitemsim.Rd
 342b2f475a7e9a62a9d876d740175fda *man/KYPSsim.Rd
 d571ad17ffafb65a6cf4b72b4595ba6d *man/PLmixed-package.Rd
-7fb9c1062d38f65354ebc654c539352a *man/PLmixed.Rd
+87de5e365d535048fd56dfa70bd7af7a *man/PLmixed.Rd
 356baf4a0bfb5fd9011a241dd11b0870 *man/coef.PLmod.Rd
 a99ea3463b35316adab286cdf6e37b1b *man/fitted.PLmod.Rd
 86315c12d8d1640b1fbb76905f98b7d7 *man/fixef.PLmod.Rd

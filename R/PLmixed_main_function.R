@@ -30,6 +30,9 @@ NULL
 #' @param factor A list of factors corresponding to the loading matrices and factors specified in model.
 #' @param init A scalar (default = \code{1}) or vector of initial lambda values. If a scalar, the value is applied to all lambda parameters.
 #' If a vector, the values apply in row by column by matrix order.
+#' @param nlp A character vector containing the names of additional nonlinear parameters that are in the model formula.
+#' @param init.nlp A scalar (default = \code{1}) or vector of initial nlp values. If a scalar, the value is applied to all nlp parameters.
+#' If a vector, the values apply in the order listed.
 #' @param nAGQ If family is non-gaussian, the number of points per axis for evaluating the adaptive
 #' Gauss-Hermite approximation to the log-likelihood. Defaults to \code{1}, corresponding to the Laplace approximation.
 #' See \code{\link{glmer}}.
@@ -71,6 +74,12 @@ NULL
 #' number, the loading will be constrained to that value. If the element is an \code{NA}, the loading will
 #' be freely estimated. For identification, it is necessary (but not sufficient) for at least one element in
 #' each column to be constrained.
+#'
+#' The \code{nlp} argument can be viewed as a special case of the \code{factor} argument, where the character vector
+#' listed in \code{nlp} is automatically linked to 1 x p lambda matrix, where p is the number of elements in \code{nlp}.
+#' The \code{load.var} for these parameters is viewed as a constant, so that the \code{nlp} parameters are equivalent for
+#' all rows in the dataset. Thus, \code{nlp} simplifies the process of adding additional nonlinear parameters to the model
+#' without having to specify corresponding \code{lambda} and \code{load.var} values.
 #' @keywords GLMM GLLAMM IRT Factor
 #' @export
 #' @import lme4 numDeriv Matrix
@@ -161,15 +170,16 @@ NULL
 #'                            load.var = c("time", "item"))
 #'
 #' summary(kyps.item.model)
+#'
 #' }
 #'
 
 ################## PLmixed Function ######################
 
-PLmixed <- function(formula, data, family = gaussian, load.var, lambda = NULL, factor = NULL, init = 1,
-                    nAGQ = 1, method = "L-BFGS-B", lower = -Inf, upper = Inf, lme4.optimizer = "bobyqa",
-                    lme4.start = NULL, lme4.optCtrl = list(),opt.control = NULL, REML = FALSE, SE = 1,
-                    ND.method = "simple", est=TRUE) {
+PLmixed <- function(formula, data, family = gaussian, load.var = NULL, lambda = NULL, factor = NULL, init = 1,
+                    nlp = NULL, init.nlp = 1, nAGQ = 1, method = "L-BFGS-B", lower = -Inf, upper = Inf,
+                    lme4.optimizer = "bobyqa", lme4.start = NULL, lme4.optCtrl = list(),opt.control = NULL,
+                    REML = FALSE, SE = 1, ND.method = "simple", est=TRUE) {
 
   start.time <- proc.time()
   iter.counter.global <- 0
@@ -210,100 +220,103 @@ PLmixed <- function(formula, data, family = gaussian, load.var, lambda = NULL, f
 
   tot.est <- 0
 
-  for (l in 1:length(load.var)){
+  if (!is.null(load.var)){
+    for (l in 1:length(load.var)){
 
-    # Determine column of load.var, which are unique, and number of unique
+      # Determine column of load.var, which are unique, and number of unique
 
-    col <- which(colnames(data) == load.var[l])
-    col.vec[l] <- col
-    uniq <- unique(data[, col])
-    uniq.list[[l]] <- uniq
-    num <- length(uniq)
-    num.vec[l] <- num
+      col <- which(colnames(data) == load.var[l])
+      col.vec[l] <- col
+      uniq <- unique(data[, col])
+      uniq.list[[l]] <- uniq
+      num <- length(uniq)
+      num.vec[l] <- num
 
 
-    # If no lambda is given, and no factor names are given,
-    # Lambda will be a 1 by q matrix where q is the number
-    # of unique values in load.var.
-    # Lambda[1,1] is constrained to 1.
+      # If no lambda is given, and no factor names are given,
+      # Lambda will be a 1 by q matrix where q is the number
+      # of unique values in load.var.
+      # Lambda[1,1] is constrained to 1.
 
-    # If no lambda is given, but factor names are given,
-    # Lambda will be a f by q matrix were f is the number
-    # of factor names given, and q is the number of unique
-    # values in load.var.
-    # For each factor, one value in Lambda is constrained
-    # to 1.
+      # If no lambda is given, but factor names are given,
+      # Lambda will be a f by q matrix were f is the number
+      # of factor names given, and q is the number of unique
+      # values in load.var.
+      # For each factor, one value in Lambda is constrained
+      # to 1.
 
-    # The exception is if the load.var contains only 1 unique element.
-    # This allows for constraints and nonlinear fixed effect parameters
-    # to be included in the model using a single element lambda matrix
-    # corresponding to a load.var with 1 unique element and a nonlinear parameter
-    # name given in factor, which is included in the model formula.
+      # The exception is if the load.var contains only 1 unique element.
+      # This allows for constraints and nonlinear fixed effect parameters
+      # to be included in the model using a single element lambda matrix
+      # corresponding to a load.var with 1 unique element and a nonlinear parameter
+      # name given in factor, which is included in the model formula.
 
-    if(is.na(lambda[l]) & num > 1){
-      tmp.lambda <- NULL
-    }
-    else{
-      tmp.lambda <- lambda[[l]]
-    }
-
-    if(is.na(factor[l])){
-      tmp.factor <- NULL
-    }
-    else{
-      tmp.factor <- factor[[l]]
-    }
-
-    if(is.null(tmp.lambda)){
-      if(is.null(tmp.factor)){
-        warning("For load.var = ", paste(load.var[l]), "\nNo lambda and factor arguments specified.\n",
-                "Lambda will be a 1 x q matrix where q = length(unique(load.var)).\n",
-                "lambda[1,1] is constrained to 1.",
-                immediate. = TRUE)
-        tmp.lambda <- matrix(NA, nrow = num, ncol = 1)
-        tmp.lambda[1, 1] <- 1
+      if(is.na(lambda[l]) & num > 1){
+        tmp.lambda <- NULL
       }
       else{
-        warning("For load.var = ", paste(load.var[l]), "\nNo lambda matrix provided.\nLambda will be ",
-                "an f x q matrix where f is the number of factor names provided and q = length(unique(load.var)).\n",
-                "One element of each column in lambda is constrained to 1.",
-                immediate. = TRUE)
-        tmp.lambda <- matrix(NA, nrow = num, ncol = length(tmp.factor))
-        for(i in 1:length(tmp.factor)){
-          tmp.lambda[i, i] <- 1
+        tmp.lambda <- lambda[[l]]
+      }
+
+      if(is.na(factor[l])){
+        tmp.factor <- NULL
+      }
+      else{
+        tmp.factor <- factor[[l]]
+      }
+
+      if(is.null(tmp.lambda)){
+        if(is.null(tmp.factor)){
+          warning("For load.var = ", paste(load.var[l]), "\nNo lambda and factor arguments specified.\n",
+                  "Lambda will be a 1 x q matrix where q = length(unique(load.var)).\n",
+                  "lambda[1,1] is constrained to 1.",
+                  immediate. = TRUE)
+          tmp.lambda <- matrix(NA, nrow = num, ncol = 1)
+          tmp.lambda[1, 1] <- 1
+        }
+        else{
+          warning("For load.var = ", paste(load.var[l]), "\nNo lambda matrix provided.\nLambda will be ",
+                  "an f x q matrix where f is the number of factor names provided and q = length(unique(load.var)).\n",
+                  "One element of each column in lambda is constrained to 1.",
+                  immediate. = TRUE)
+          tmp.lambda <- matrix(NA, nrow = num, ncol = length(tmp.factor))
+          for(i in 1:length(tmp.factor)){
+            tmp.lambda[i, i] <- 1
+          }
         }
       }
+
+
+
+      num.est.par <- sum(is.na(tmp.lambda))
+      tot.est <- c(tot.est, num.est.par)
+
+
+      # Determines the number of factors specified. If factor
+      # names are provided, the number of factors is set equal to
+      # the number of names provided.
+      # If no names are provided, the number of factors is set to the
+      # number of columns in Lambda. Factor names are assigned column
+      # by column from lambda to lambda as f1.1, f2.1, f1.2, f2.2, etc.
+
+      if (!is.null(tmp.factor)){
+        factors[l] <- length(tmp.factor)
+      }
+      else{
+        warning("For load.var = ", paste(load.var[l]), "\nNo factor names provided.\n",
+                "Factors named as fc.v, where c is the column number of the vth load.var.",
+                immediate. = TRUE)
+        factors[l] <- ncol(as.matrix(tmp.lambda))
+        tmp.factor <- paste("f", 1:factors[l],".",l, sep="")
+      }
+
+      tmp.lambda <- as.matrix(tmp.lambda)
+      new.lambda[[l]] <- tmp.lambda
+      new.factor[[l]] <- tmp.factor
+
     }
-
-
-
-    num.est.par <- sum(is.na(tmp.lambda))
-    tot.est <- c(tot.est, num.est.par)
-
-
-    # Determines the number of factors specified. If factor
-    # names are provided, the number of factors is set equal to
-    # the number of names provided.
-    # If no names are provided, the number of factors is set to the
-    # number of columns in Lambda. Factor names are assigned column
-    # by column from lambda to lambda as f1.1, f2.1, f1.2, f2.2, etc.
-
-    if (!is.null(tmp.factor)){
-      factors[l] <- length(tmp.factor)
-    }
-    else{
-      warning("For load.var = ", paste(load.var[l]), "\nNo factor names provided.\n",
-              "Factors named as fc.v, where c is the column number of the vth load.var.",
-              immediate. = TRUE)
-      factors[l] <- ncol(as.matrix(tmp.lambda))
-      tmp.factor <- paste("f", 1:factors[l],".",l, sep="")
-    }
-
-    tmp.lambda <- as.matrix(tmp.lambda)
-    new.lambda[[l]] <- tmp.lambda
-    new.factor[[l]] <- tmp.factor
-
   }
+
 
   # Determine how many parameters in Lambda must be estimated.
   # For those that must be estimated, start values are assigned
@@ -316,8 +329,27 @@ PLmixed <- function(formula, data, family = gaussian, load.var, lambda = NULL, f
     init.tot <- rep(init, tot.est)
   }
   else{
-    init.tot <- c(init, rep(1, (tot.est-length(init))))
+    init.tot <- c(init, rep(1, (tot.est - length(init))))
   }
+
+  # Determine the number of parameters in nlp. Start values are assigned
+  # based on those provided by the user. If none are provided,
+  # the start values used are 1.
+
+  tot.est.nlp <- length(nlp)
+
+  if(tot.est.nlp > 0){
+    if (length(init.nlp) == 1){
+      init.tot.nlp <- rep(init.nlp, tot.est.nlp)
+    }
+    else{
+      init.tot.nlp <- c(init.nlp, rep(1, (tot.est.nlp - length(init.nlp))))
+    }
+  } else {
+    init.tot.nlp <- NULL
+  }
+
+  init.tot <- c(init.tot.nlp, init.tot)
 
   lambda <- new.lambda
   factor <- new.factor
@@ -348,35 +380,47 @@ PLmixed <- function(formula, data, family = gaussian, load.var, lambda = NULL, f
       cat('\r',paste0('Iteration Number: ', iter.counter.global))
     }
 
-
-    for (h in 1:length(load.var)){
-      num.fac <- factors[h]
-      num <- num.vec[h]
-      col <- col.vec[h]
-      uniq <- uniq.list[[h]]
-      factor.2 <- factor[[h]]
-      consts.2 <- consts[[h]]
-
-
-
-      ### Cycle through each column of the loading matrix
-      for(q in 1:num.fac){
-
-        ### Apply contstraints and lambda values to weighted.var
-        for(i in 1:num){
-          if(is.na(consts.2[i, q]) == 0){
-            obs$weighted.var[obs[, col] == uniq[i]] <- consts.2[i, q]
-          }
-          else {
-            obs$weighted.var[obs[, col] == uniq[i]] <- start[num.est]
-            num.est <- num.est + 1
-          }
-        }
-        names(obs)[names(obs) == "weighted.var"] <- factor.2[q]
+    if (tot.est.nlp > 0){
+      nlp.vals <- start[1:tot.est.nlp]
+      for (p in 1:tot.est.nlp){
+        obs$place.holder.variable.for.nlp <- nlp.vals[p]
+        names(obs)[names(obs) == "place.holder.variable.for.nlp"] <- nlp[p]
       }
 
+      if (tot.est > 0){
+        start <- start[(tot.est.nlp + 1): length(start)]
+      }
     }
 
+    if (!is.null(load.var)){
+      for (h in 1:length(load.var)){
+        num.fac <- factors[h]
+        num <- num.vec[h]
+        col <- col.vec[h]
+        uniq <- uniq.list[[h]]
+        factor.2 <- factor[[h]]
+        consts.2 <- consts[[h]]
+
+
+
+        ### Cycle through each column of the loading matrix
+        for(q in 1:num.fac){
+
+          ### Apply contstraints and lambda values to weighted.var
+          for(i in 1:num){
+            if(is.na(consts.2[i, q]) == 0){
+              obs$weighted.var[obs[, col] == uniq[i]] <- consts.2[i, q]
+            }
+            else {
+              obs$weighted.var[obs[, col] == uniq[i]] <- start[num.est]
+              num.est <- num.est + 1
+            }
+          }
+          names(obs)[names(obs) == "weighted.var"] <- factor.2[q]
+        }
+
+      }
+    }
     #print(start)
     #print(num.est)
     #print(lme4.initial.theta.values)
@@ -505,33 +549,41 @@ PLmixed <- function(formula, data, family = gaussian, load.var, lambda = NULL, f
 
       rep.lam <- vector("list", length(lambda))
       for(i in 1:tot.est.par){
-        lam.new <- Est + iden[, i]*eps
-        cycle <- 1
-        for(c in 1:length(lambda)){
-          n.lam <- lambda[[c]]
-          full.lam <- matrix(0,nrow = nrow(n.lam), ncol = ncol(n.lam))
+        Est.new <- Est + iden[, i]*eps
 
-          for(p in 1:ncol(n.lam)){
-            for(q in 1:nrow(n.lam)){
-              if(is.na(n.lam[q, p]) == 0){
-                full.lam[q, p] <- n.lam[q, p]
-              }
-              else{
-                full.lam[q, p] <- lam.new[cycle]
-                cycle <- cycle + 1
+        if (!is.null(load.var)){
+          if (tot.est.nlp > 0){
+            lam.new <- Est.new[(tot.est.nlp + 1):length(Est.new)]
+          } else {
+            lam.new <- Est.new
+          }
+
+          cycle <- 1
+          for(c in 1:length(lambda)){
+            n.lam <- lambda[[c]]
+            full.lam <- matrix(0,nrow = nrow(n.lam), ncol = ncol(n.lam))
+
+            for(p in 1:ncol(n.lam)){
+              for(q in 1:nrow(n.lam)){
+                if(is.na(n.lam[q, p]) == 0){
+                  full.lam[q, p] <- n.lam[q, p]
+                }
+                else{
+                  full.lam[q, p] <- lam.new[cycle]
+                  cycle <- cycle + 1
+                }
               }
             }
+            rep.lam[[c]] <- full.lam
           }
-          rep.lam[[c]] <- full.lam
         }
-
-        final.new <- La.load(start = lam.new, consts = rep.lam, data = data,
+        final.new <- La.load(start = Est.new, consts = rep.lam, data = data,
                              factor = factor, load.var = load.var, model = model,
                              est = TRUE, lik = FALSE, delta = FALSE, nAGQ = nAGQ)
-        beta.ep[,i] <- lme4::fixef(final.new$total)
+        beta.ep[, i] <- lme4::fixef(final.new$total)
       }
 
-      grad.b <- (matrix(rep(beta,tot.est.par), num.fix.ef,tot.est.par, byrow = FALSE) - beta.ep)/ eps
+      grad.b <- (matrix(rep(beta, tot.est.par), num.fix.ef, tot.est.par, byrow = FALSE) - beta.ep)/ eps
 
       #Adjusted standard errors for beta
       adj.se.b <- rep(0, num.fix.ef)
@@ -548,7 +600,7 @@ PLmixed <- function(formula, data, family = gaussian, load.var, lambda = NULL, f
 
       grad.b2 <- matrix(0, num.fix.ef, tot.est.par)
       for(i in 1:num.fix.ef){
-        grad.b2[i, ] <- numDeriv::grad(La.load, method= ND.method, x = Est, consts = lambda, data = data,
+        grad.b2[i, ] <- numDeriv::grad(La.load, method = ND.method, x = Est, consts = lambda, data = data,
                                       factor = factor, load.var = load.var, model = model, lik = FALSE,
                                       est = FALSE, delta = TRUE, k = i, nAGQ = nAGQ)
       }
@@ -561,7 +613,7 @@ PLmixed <- function(formula, data, family = gaussian, load.var, lambda = NULL, f
 
     }
     else if(tot.est.par == 0){
-      adj.se.b <- beta
+      adj.se.b <- sqrt(naive)
     }
 
 
@@ -582,42 +634,69 @@ PLmixed <- function(formula, data, family = gaussian, load.var, lambda = NULL, f
 
     fin.lam <- vector("list", length(load.var))
 
-    fill <- 1
-
-    for (h in 1:length(load.var)){
-
-      num.fac <- factors[h]
-      num <- num.vec[h]
-      col <- col.vec[h]
-      uniq <- uniq.list[[h]]
-      factor.2 <- factor[[h]]
-      lambda.1 <- lambda[[h]]
-
-      final.lambda <- matrix(NA, nrow = num.vec[h], ncol = 2 * (length(factor.2)))
-      se.names <- rep("SE", length(factor.2))
-      comb <- rbind(factor.2, se.names)
-      comb <- matrix(comb, nrow = 1, ncol = 2 * length(factor.2), byrow = F)
-      rownames(final.lambda) <- uniq
-      colnames(final.lambda) <- comb
-
-
-      for(i in 1:nrow(as.matrix(lambda.1))){
-        for (j in 1:ncol(as.matrix(lambda.1))){
-          if(is.na(lambda.1[i, j]) == 1){
-            final.lambda[i, (j * 2 - 1)] <- Est[fill]
-            final.lambda[i, j * 2] <- st.er[fill]
-            fill <- fill + 1
-          }
-          else{
-            final.lambda[i, (j * 2 - 1)] <- lambda.1[i, j]
-          }
-        }
+    if (tot.est.nlp > 0){
+      nlp.Est <- Est[1:tot.est.nlp]
+      nlp.st.er <- st.er[1:tot.est.nlp]
+      nlp.tab <- cbind(nlp.Est, nlp.st.er)
+      row.names(nlp.tab) <- nlp
+      colnames(nlp.tab) <- c("Estimate", "SE")
+      if (tot.est > 0){
+        Est <- Est[(tot.est.nlp + 1): length(Est)]
+        st.er <- st.er[(tot.est.nlp + 1): length(st.er)]
+      } else {
+        Est <- NULL
+        st.er <- NULL
       }
-      fin.lam[[h]] <- final.lambda
+    } else{
+      nlp.Est <- NULL
+      nlp.tab <- NULL
     }
 
-    lam.names <- paste0("lambda.", load.var)
-    names(fin.lam) <- lam.names
+
+    fill <- 1
+
+    if(!is.null(load.var)){
+      for (h in 1:length(load.var)){
+
+        num.fac <- factors[h]
+        num <- num.vec[h]
+        col <- col.vec[h]
+        uniq <- uniq.list[[h]]
+        factor.2 <- factor[[h]]
+        lambda.1 <- lambda[[h]]
+
+        final.lambda <- matrix(NA, nrow = num.vec[h], ncol = 2 * (length(factor.2)))
+        se.names <- rep("SE", length(factor.2))
+        comb <- rbind(factor.2, se.names)
+        comb <- matrix(comb, nrow = 1, ncol = 2 * length(factor.2), byrow = F)
+        rownames(final.lambda) <- uniq
+        colnames(final.lambda) <- comb
+
+
+        for(i in 1:nrow(as.matrix(lambda.1))){
+          for (j in 1:ncol(as.matrix(lambda.1))){
+            if(is.na(lambda.1[i, j]) == 1){
+              final.lambda[i, (j * 2 - 1)] <- Est[fill]
+              final.lambda[i, j * 2] <- st.er[fill]
+              fill <- fill + 1
+            }
+            else{
+              final.lambda[i, (j * 2 - 1)] <- lambda.1[i, j]
+            }
+          }
+        }
+        fin.lam[[h]] <- final.lambda
+      }
+
+
+      lam.names <- paste0("lambda.", load.var)
+      names(fin.lam) <- lam.names
+
+    } else{
+      fin.lam <- NULL
+    }
+
+
     if (class(final) == "lmerMod"){
       reml = REML
     }
@@ -634,11 +713,11 @@ PLmixed <- function(formula, data, family = gaussian, load.var, lambda = NULL, f
                          "Fixed Effects" = fixed.effect.est.global, "Random Effects" = random.effect.est.global,
                          "Time" = time.global)
 
-    final.object <- list("Log-Likelihood" = final.lik, "Fixed Effects" = fix, "Random Effects" = rand.ef,
-                         "Lambda" = fin.lam, "Cov Matrix" = cov.mat, "Error code" = code, "Total Iterations" = total.iters,
-                         "lme4 Model"=final, "Iteration Summary" = iter.summary, "Model" = model, "Family" = family(final),
+    final.object <- list("Log-Likelihood" = final.lik, "Fixed Effects" = fix, "Random Effects" = rand.ef, "Lambda" = fin.lam,
+                         "nlp" = nlp.tab, "Cov Matrix" = cov.mat, "Error code" = code, "Total Iterations" = total.iters,
+                         "lme4 Model"= final, "Iteration Summary" = iter.summary, "Model" = model, "Family" = family(final),
                          "Data" = deparse(substitute(data)), "Load.Var" = load.var, "Factor" = factor, "nAGQ" = nAGQ,
-                         "Lambda.raw" = new.lambda, "Param" = Est, "Estimation Time" = total.estimation.time, "REML" = reml,
+                         "Lambda.raw" = new.lambda, "Param" = c(nlp.Est, Est), "Estimation Time" = total.estimation.time, "REML" = reml,
                          "Optimizer" = optimizers)
 
     class(final.object) <- append("PLmod", class(final.object))

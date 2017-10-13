@@ -4,11 +4,12 @@
 \alias{PLmixed}
 \title{Fit GLMM with Factor Structure}
 \usage{
-PLmixed(formula, data, family = gaussian, load.var, lambda = NULL,
-  factor = NULL, init = 1, nAGQ = 1, method = "L-BFGS-B",
-  lower = -Inf, upper = Inf, lme4.optimizer = "bobyqa",
-  lme4.start = NULL, lme4.optCtrl = list(), opt.control = NULL,
-  REML = FALSE, SE = 1, ND.method = "simple", est = TRUE)
+PLmixed(formula, data, family = gaussian, load.var = NULL, lambda = NULL,
+  factor = NULL, init = 1, nlp = NULL, init.nlp = 1, nAGQ = 1,
+  method = "L-BFGS-B", lower = -Inf, upper = Inf,
+  lme4.optimizer = "bobyqa", lme4.start = NULL, lme4.optCtrl = list(),
+  opt.control = NULL, REML = FALSE, SE = 1, ND.method = "simple",
+  est = TRUE)
 }
 \arguments{
 \item{formula}{A formula following that of \pkg{\link{lme4}}, with the addition that factors can be specified
@@ -29,6 +30,11 @@ indicates the loading is freely estimated, while a numeric entry indicates a con
 
 \item{init}{A scalar (default = \code{1}) or vector of initial lambda values. If a scalar, the value is applied to all lambda parameters.
 If a vector, the values apply in row by column by matrix order.}
+
+\item{nlp}{A character vector containing the names of additional nonlinear parameters that are in the model formula.}
+
+\item{init.nlp}{A scalar (default = \code{1}) or vector of initial nlp values. If a scalar, the value is applied to all nlp parameters.
+If a vector, the values apply in the order listed.}
 
 \item{nAGQ}{If family is non-gaussian, the number of points per axis for evaluating the adaptive
 Gauss-Hermite approximation to the log-likelihood. Defaults to \code{1}, corresponding to the Laplace approximation.
@@ -89,6 +95,12 @@ of \code{factor}. Each element of the matrix should be either a number or \code{
 number, the loading will be constrained to that value. If the element is an \code{NA}, the loading will
 be freely estimated. For identification, it is necessary (but not sufficient) for at least one element in
 each column to be constrained.
+
+The \code{nlp} argument can be viewed as a special case of the \code{factor} argument, where the character vector
+listed in \code{nlp} is automatically linked to 1 x p lambda matrix, where p is the number of elements in \code{nlp}.
+The \code{load.var} for these parameters is viewed as a constant, so that the \code{nlp} parameters are equivalent for
+all rows in the dataset. Thus, \code{nlp} simplifies the process of adding additional nonlinear parameters to the model
+without having to specify corresponding \code{lambda} and \code{load.var} values.
 }
 \examples{
 data("IRTsim") # Load the IRTsim data
@@ -174,6 +186,7 @@ kyps.item.model <- PLmixed(response ~ 0 + as.factor(item) + lat.var:time2
                            load.var = c("time", "item"))
 
 summary(kyps.item.model)
+
 }
 
 }
