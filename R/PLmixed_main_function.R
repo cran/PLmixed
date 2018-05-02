@@ -49,6 +49,7 @@ NULL
 #' @param REML Use REML if model is linear? Defaults to \code{FALSE}.
 #' @param SE Method of calculating standard errors for fixed effects.
 #' @param ND.method Method of calculating numerical derivatives.
+#' @param check Check number of observations vs. levels and number of observations vd. random effects.
 #' @param est Return parameter estimates.
 #' @return An object of class \code{PLmod}, which contains an object of class \code{merMod} as one of its elements.
 #' Some functions for class \code{merMod} have been adapted to work with class \code{PLmod}. Others can be utilized
@@ -178,8 +179,8 @@ NULL
 
 PLmixed <- function(formula, data, family = gaussian, load.var = NULL, lambda = NULL, factor = NULL, init = 1,
                     nlp = NULL, init.nlp = 1, nAGQ = 1, method = "L-BFGS-B", lower = -Inf, upper = Inf,
-                    lme4.optimizer = "bobyqa", lme4.start = NULL, lme4.optCtrl = list(),opt.control = NULL,
-                    REML = FALSE, SE = 1, ND.method = "simple", est=TRUE) {
+                    lme4.optimizer = "bobyqa", lme4.start = NULL, lme4.optCtrl = list(), opt.control = NULL,
+                    REML = FALSE, SE = 1, ND.method = "simple", check = "stop", est=TRUE) {
 
   start.time <- proc.time()
   iter.counter.global <- 0
@@ -437,6 +438,8 @@ PLmixed <- function(formula, data, family = gaussian, load.var = NULL, lambda = 
     if (isTRUE(all.equal(family, gaussian()))) {
       lmer.result <- lme4::lmer(model, data = obs, REML = REML, start = lme4.start.val,
                                 control = lmerControl(calc.derivs = derivs,
+                                                      check.nobs.vs.nlev = check,
+                                                      check.nobs.vs.nRE = check,
                                                       optimizer = lme4.optimizer,
                                                       optCtrl = lme4.optCtrl))
 
@@ -447,6 +450,8 @@ PLmixed <- function(formula, data, family = gaussian, load.var = NULL, lambda = 
     else {
       lmer.result <- lme4::glmer(model, data = obs, family = family, start = lme4.start.val,
                                  control = glmerControl(calc.derivs = derivs,
+                                                        check.nobs.vs.nlev = check,
+                                                        check.nobs.vs.nRE = check,
                                                         optimizer = lme4.optimizer,
                                                         optCtrl = lme4.optCtrl),
                                                         nAGQ = nAGQ)
@@ -718,7 +723,7 @@ PLmixed <- function(formula, data, family = gaussian, load.var = NULL, lambda = 
                          "lme4 Model"= final, "Iteration Summary" = iter.summary, "Model" = model, "Family" = family(final),
                          "Data" = deparse(substitute(data)), "Load.Var" = load.var, "Factor" = factor, "nAGQ" = nAGQ,
                          "Lambda.raw" = new.lambda, "Param" = c(nlp.Est, Est), "Estimation Time" = total.estimation.time, "REML" = reml,
-                         "Optimizer" = optimizers)
+                         "Optimizer" = optimizers, "nlp.vars" = nlp)
 
     class(final.object) <- append("PLmod", class(final.object))
     return(final.object)

@@ -253,27 +253,71 @@ predict.PLmod <- function(object, newdata = NULL,...){
   else{
     obs <- newdata
     estimates <- object$'Param'
-    num.est <- 1
-    for (h in 1:length(object$'Load.Var')){
-      col <- which(colnames(obs) == object$'Load.Var'[h])
-      uniq <- unique(obs[,col])
-      num <- length(unique(obs[,col]))
-      num.fac <- length(object$'Factor'[[h]])
-      factor <- object$'Factor'[[h]]
-      consts <- object$'Lambda.raw'[[h]]
-      for(q in 1:num.fac){
-        for(i in 1:num){
-          if(is.na(consts[i,q]) == 0){
-            obs$weighted.var[obs[,col]==uniq[i]] <- consts[i,q]
-          }
-          else {
-            obs$weighted.var[obs[,col]==uniq[i]] <- estimates[num.est]
-            num.est <- num.est + 1
-          }
-        }
-        names(obs)[names(obs) == "weighted.var"] <- factor[q]
+    tot.est.nlp <- 0
+    if (!is.null(object$'nlp')){
+      tot.est.nlp <- nrow(object$'nlp')
+      nlp <- row.names(object$'nlp')
+    }
+
+    if (tot.est.nlp > 0){
+      nlp.vals <- estimates[1:tot.est.nlp]
+      for (p in 1:tot.est.nlp){
+        obs$place.holder.variable.for.nlp <- nlp.vals[p]
+        names(obs)[names(obs) == "place.holder.variable.for.nlp"] <- nlp[p]
+      }
+
+      if (length(object$'Param') > 0){
+        estimates <- estimates[(tot.est.nlp + 1): length(estimates)]
       }
     }
+    num.est <- 1
+    if (!is.null(object$'Load.Var')){
+      for (h in 1:length(object$'Load.Var')){
+        col <- which(colnames(obs) == object$'Load.Var'[h])
+        uniq <- unique(obs[,col])
+        num <- length(unique(obs[,col]))
+        num.fac <- length(object$'Factor'[[h]])
+        factor <- object$'Factor'[[h]]
+        consts <- object$'Lambda.raw'[[h]]
+        for(q in 1:num.fac){
+          for(i in 1:num){
+            if(is.na(consts[i,q]) == 0){
+              obs$weighted.var[obs[,col]==uniq[i]] <- consts[i,q]
+            }
+            else {
+              obs$weighted.var[obs[,col]==uniq[i]] <- estimates[num.est]
+              num.est <- num.est + 1
+            }
+          }
+          names(obs)[names(obs) == "weighted.var"] <- factor[q]
+        }
+
+      }
+    }
+
+
+    # for (h in 1:length(object$'Load.Var')){
+    #   col <- which(colnames(obs) == object$'Load.Var'[h])
+    #   uniq <- unique(obs[,col])
+    #   num <- length(unique(obs[,col]))
+    #   num.fac <- length(object$'Factor'[[h]])
+    #   factor <- object$'Factor'[[h]]
+    #   consts <- object$'Lambda.raw'[[h]]
+    #   for(q in 1:num.fac){
+    #     for(i in 1:num){
+    #       if(is.na(consts[i,q]) == 0){
+    #         obs$weighted.var[obs[,col]==uniq[i]] <- consts[i,q]
+    #       }
+    #       else {
+    #         obs$weighted.var[obs[,col]==uniq[i]] <- estimates[num.est]
+    #         num.est <- num.est + 1
+    #       }
+    #     }
+    #     names(obs)[names(obs) == "weighted.var"] <- factor[q]
+    #   }
+    # }
+
+
     predict(object$'lme4 Model', newdata = obs, ...)
   }
 }

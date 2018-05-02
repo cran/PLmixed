@@ -9,7 +9,7 @@ PLmixed(formula, data, family = gaussian, load.var = NULL, lambda = NULL,
   method = "L-BFGS-B", lower = -Inf, upper = Inf,
   lme4.optimizer = "bobyqa", lme4.start = NULL, lme4.optCtrl = list(),
   opt.control = NULL, REML = FALSE, SE = 1, ND.method = "simple",
-  est = TRUE)
+  check = "stop", est = TRUE)
 }
 \arguments{
 \item{formula}{A formula following that of \pkg{\link{lme4}}, with the addition that factors can be specified
@@ -60,6 +60,8 @@ or \code{\link{glmerControl}}}
 \item{SE}{Method of calculating standard errors for fixed effects.}
 
 \item{ND.method}{Method of calculating numerical derivatives.}
+
+\item{check}{Check number of observations vs. levels and number of observations vd. random effects.}
 
 \item{est}{Return parameter estimates.}
 }
