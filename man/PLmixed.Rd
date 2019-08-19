@@ -4,12 +4,13 @@
 \alias{PLmixed}
 \title{Fit GLMM with Factor Structure}
 \usage{
-PLmixed(formula, data, family = gaussian, load.var = NULL, lambda = NULL,
-  factor = NULL, init = 1, nlp = NULL, init.nlp = 1, nAGQ = 1,
-  method = "L-BFGS-B", lower = -Inf, upper = Inf,
-  lme4.optimizer = "bobyqa", lme4.start = NULL, lme4.optCtrl = list(),
-  opt.control = NULL, REML = FALSE, SE = 1, ND.method = "simple",
-  check = "stop", est = TRUE)
+PLmixed(formula, data, family = gaussian, load.var = NULL,
+  lambda = NULL, factor = NULL, init = 1, nlp = NULL,
+  init.nlp = 1, nAGQ = 1, method = "L-BFGS-B", lower = -Inf,
+  upper = Inf, lme4.optimizer = "bobyqa", lme4.start = NULL,
+  lme4.optCtrl = list(), opt.control = NULL, REML = FALSE, SE = 1,
+  ND.method = "simple", check = "stop", est = TRUE,
+  iter.count = TRUE)
 }
 \arguments{
 \item{formula}{A formula following that of \pkg{\link{lme4}}, with the addition that factors can be specified
@@ -40,11 +41,11 @@ If a vector, the values apply in the order listed.}
 Gauss-Hermite approximation to the log-likelihood. Defaults to \code{1}, corresponding to the Laplace approximation.
 See \code{\link{glmer}}.}
 
-\item{method}{The \code{\link{optim}} optimization method. Defaults to \code{L-BFGS-B}.}
+\item{method}{The \code{\link{optimx}} optimization method. Defaults to \code{L-BFGS-B}.}
 
-\item{lower}{Lower bound on lambda parameters if \code{method = "L-BFGS-B"}.}
+\item{lower}{Lower bound on lambda parameters if applicable.}
 
-\item{upper}{Upper bound on lambda parameters if \code{method = "L-BFGS-B"}.}
+\item{upper}{Upper bound on lambda parameters if applicable.}
 
 \item{lme4.optimizer}{The \pkg{\link{lme4}} optimization method.}
 
@@ -53,7 +54,7 @@ See \code{\link{glmer}}.}
 \item{lme4.optCtrl}{A list controlling the lme4 optimization. See \code{\link{lmerControl}}
 or \code{\link{glmerControl}}}
 
-\item{opt.control}{Controls for the \code{\link{optim}} optimization.}
+\item{opt.control}{Controls for the \code{\link{optimx}} optimization.}
 
 \item{REML}{Use REML if model is linear? Defaults to \code{FALSE}.}
 
@@ -64,6 +65,8 @@ or \code{\link{glmerControl}}}
 \item{check}{Check number of observations vs. levels and number of observations vd. random effects.}
 
 \item{est}{Return parameter estimates.}
+
+\item{iter.count}{Print the iteration counter during optimization.}
 }
 \value{
 An object of class \code{PLmod}, which contains an object of class \code{merMod} as one of its elements.
@@ -191,6 +194,14 @@ summary(kyps.item.model)
 
 }
 
+}
+\references{
+Rockwood, N. J., & Jeon, M. (2019). Estimating complex measurement and growth models
+using the R package PLmixed.\emph{Multivariate Behavioral Research, 54}(2), 288-306.
+
+Jeon, M., & Rabe-Hesketh, S. (2012). Profile-likelihood approach for estimating
+generalized linear mixed models with factor structures. \emph{Journal of Educational
+and Behavioral Statistics, 37}(4), 518-542.
 }
 \seealso{
 \pkg{\link{lme4}}

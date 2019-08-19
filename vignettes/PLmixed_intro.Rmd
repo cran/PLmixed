@@ -1,7 +1,7 @@
 ---
 title: "PLmixed: An Introduction"
 author: |
-  | Nicholas Rockwood, The Ohio State University (rockwood.19@osu.edu)
+  | Nicholas Rockwood, Loma Linda University (nrockwood@llu.edu)
   | Minjeong Jeon, University of California, Los Angeles (mjjeon@ucla.edu)
 output: rmarkdown::html_vignette
 vignette: >
@@ -14,7 +14,7 @@ nocite: |
 ---
 
 
-The purpose of `PLmixed` is to extend the capabilities of `lme4` [@lme4] to allow factor structures (i.e., factor loadings, weights, discrimination parameters) to be freely estimated. Thus, for instance, factor analysis and item response theory models with multiple hierarchical levels and/or crossed random effects can be estimated using code that requires little more input than that required by `lme4`. All of the strengths of `lme4`, including the ability to add (possibly random) covariates and an arbitrary number of crossed random effects, are encompassed within `PLmixed`. In fact, `PLmixed` uses `lme4` and `optim` [@byrd1995] to estimate the model using nested maximizations. Details of this approach can be found in @jeon2012. A manuscript documenting the use of `PLmixed` is currently in preparation. 
+The purpose of `PLmixed` is to extend the capabilities of `lme4` [@lme4] to allow factor structures (i.e., factor loadings, weights, discrimination parameters) to be freely estimated. Thus, for instance, factor analysis and item response theory models with multiple hierarchical levels and/or crossed random effects can be estimated using code that requires little more input than that required by `lme4`. All of the strengths of `lme4`, including the ability to add (possibly random) covariates and an arbitrary number of crossed random effects, are encompassed within `PLmixed`. In fact, `PLmixed` uses `lme4` and `optim` [@byrd1995] to estimate the model using nested maximizations. Details of this approach can be found in @jeon2012. @rockwood2019 provide more details regarding the use of PLmixed. 
 
 ## Installation
 
@@ -74,7 +74,6 @@ summary(kyps.model)
 
 The summary contains all of the usual `lme4` output, as well as the estimated `lambda` matrix and some details corresponding to the estimation at the bottom. Looking at the lambda matrix, we see that the middle school effect decreased over time, while the high school effect increased from time three to time four. The fixed effects section contains the estimated mean self-esteem score for students at time 1, as well as mean differences between the other three time points and time one. On average, self-esteem scores increased over time.
 
-*It should be noted that the estimation time printed in this document is not an accurate representation of the true time required to fit the model. Because this document is created using Rmarkdown, other processes are involved during the evaluation (and timing) of the code. Using the same computer used to generate the Rmarkdown file, but outside of the Rmarkdown environment, the estimation took approximately 1.5 minutes.*
 
 
 ## Multilevel 2PL IRT Example

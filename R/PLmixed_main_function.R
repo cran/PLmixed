@@ -1,14 +1,20 @@
 #' PLmixed: A package for estimating GLMMs with factor structures.
 #'
 #' The \code{PLmixed} package's main function is \code{\link{PLmixed}}, which estimates
-#' the model through nested maximizations using the \pkg{\link{lme4}} package
-#' and \code{\link{optim}} function. This extends the capabilities of \pkg{\link{lme4}}
+#' the model through nested maximizations using the \pkg{\link{lme4}} and \pkg{\link{optimx}} packages
+#' (previously the \code{\link{optim}} function). This extends the capabilities of \pkg{\link{lme4}}
 #' to allow for estimated factor structures, making it useful for estimating multilevel
 #' factor analysis and item response theory models with an arbitrary number of hierarchical
 #' levels or crossed random effects.
-#'
 #' @docType package
 #' @name PLmixed-package
+#' @references
+#' Rockwood, N. J., & Jeon, M. (2019). Estimating complex measurement and growth models
+#' using the R package PLmixed.\emph{Multivariate Behavioral Research, 54}(2), 288-306.
+#'
+#' Jeon, M., & Rabe-Hesketh, S. (2012). Profile-likelihood approach for estimating
+#' generalized linear mixed models with factor structures. \emph{Journal of Educational
+#' and Behavioral Statistics, 37}(4), 518-542.
 NULL
 
 
@@ -38,19 +44,20 @@ NULL
 #' See \code{\link{glmer}}.
 #' @seealso \code{\link{glmer}}
 #' @seealso \code{\link{lmer}}
-#' @param method The \code{\link{optim}} optimization method. Defaults to \code{L-BFGS-B}.
-#' @param lower Lower bound on lambda parameters if \code{method = "L-BFGS-B"}.
-#' @param upper Upper bound on lambda parameters if \code{method = "L-BFGS-B"}.
+#' @param method The \code{\link{optimx}} optimization method. Defaults to \code{L-BFGS-B}.
+#' @param lower Lower bound on lambda parameters if applicable.
+#' @param upper Upper bound on lambda parameters if applicable.
 #' @param lme4.optimizer The \pkg{\link{lme4}} optimization method.
 #' @param lme4.start Start values used for \pkg{\link{lme4}}.
 #' @param lme4.optCtrl A list controlling the lme4 optimization. See \code{\link{lmerControl}}
 #' or \code{\link{glmerControl}}
-#' @param opt.control Controls for the \code{\link{optim}} optimization.
+#' @param opt.control Controls for the \code{\link{optimx}} optimization.
 #' @param REML Use REML if model is linear? Defaults to \code{FALSE}.
 #' @param SE Method of calculating standard errors for fixed effects.
 #' @param ND.method Method of calculating numerical derivatives.
 #' @param check Check number of observations vs. levels and number of observations vd. random effects.
 #' @param est Return parameter estimates.
+#' @param iter.count Print the iteration counter during optimization.
 #' @return An object of class \code{PLmod}, which contains an object of class \code{merMod} as one of its elements.
 #' Some functions for class \code{merMod} have been adapted to work with class \code{PLmod}. Others can be utilized
 #' using \code{object$'lme4 Model'}, where \code{object} is an object of class \code{PLmod}.
@@ -81,9 +88,19 @@ NULL
 #' The \code{load.var} for these parameters is viewed as a constant, so that the \code{nlp} parameters are equivalent for
 #' all rows in the dataset. Thus, \code{nlp} simplifies the process of adding additional nonlinear parameters to the model
 #' without having to specify corresponding \code{lambda} and \code{load.var} values.
+#'
+#' @references
+#'
+#' Rockwood, N. J., & Jeon, M. (2019). Estimating complex measurement and growth models
+#' using the R package PLmixed.\emph{Multivariate Behavioral Research, 54}(2), 288-306.
+#'
+#' Jeon, M., & Rabe-Hesketh, S. (2012). Profile-likelihood approach for estimating
+#' generalized linear mixed models with factor structures. \emph{Journal of Educational
+#' and Behavioral Statistics, 37}(4), 518-542.
+#'
 #' @keywords GLMM GLLAMM IRT Factor
 #' @export
-#' @import lme4 numDeriv Matrix
+#' @import lme4 numDeriv Matrix optimx
 #' @importFrom stats df.residual gaussian logLik optim vcov AIC BIC coef deviance family fitted
 #' nobs pnorm predict residuals simulate
 #' @importFrom graphics par plot points
@@ -180,7 +197,7 @@ NULL
 PLmixed <- function(formula, data, family = gaussian, load.var = NULL, lambda = NULL, factor = NULL, init = 1,
                     nlp = NULL, init.nlp = 1, nAGQ = 1, method = "L-BFGS-B", lower = -Inf, upper = Inf,
                     lme4.optimizer = "bobyqa", lme4.start = NULL, lme4.optCtrl = list(), opt.control = NULL,
-                    REML = FALSE, SE = 1, ND.method = "simple", check = "stop", est=TRUE) {
+                    REML = FALSE, SE = 1, ND.method = "simple", check = "stop", est = TRUE, iter.count = TRUE) {
 
   start.time <- proc.time()
   iter.counter.global <- 0
@@ -378,7 +395,9 @@ PLmixed <- function(formula, data, family = gaussian, load.var = NULL, lambda = 
 
     if (is.null(stop.iter.counter)){
       assign('iter.counter.global', iter.counter.global + 1, inherits = TRUE)
-      cat('\r',paste0('Iteration Number: ', iter.counter.global))
+      if (iter.count){
+        cat('\r',paste0('Iteration Number: ', iter.counter.global))
+      }
     }
 
     if (tot.est.nlp > 0){
@@ -440,6 +459,7 @@ PLmixed <- function(formula, data, family = gaussian, load.var = NULL, lambda = 
                                 control = lmerControl(calc.derivs = derivs,
                                                       check.nobs.vs.nlev = check,
                                                       check.nobs.vs.nRE = check,
+                                                      check.nlev.gtr.1 = check,
                                                       optimizer = lme4.optimizer,
                                                       optCtrl = lme4.optCtrl))
 
@@ -452,6 +472,7 @@ PLmixed <- function(formula, data, family = gaussian, load.var = NULL, lambda = 
                                  control = glmerControl(calc.derivs = derivs,
                                                         check.nobs.vs.nlev = check,
                                                         check.nobs.vs.nRE = check,
+                                                        check.nlev.gtr.1 = check,
                                                         optimizer = lme4.optimizer,
                                                         optCtrl = lme4.optCtrl),
                                                         nAGQ = nAGQ)
@@ -503,36 +524,42 @@ PLmixed <- function(formula, data, family = gaussian, load.var = NULL, lambda = 
 
   ########## End La.Load Function ##########
 
-  opt.result <- optim(par = init.tot, fn = La.load, hessian = TRUE, method = method, control = opt.control,
-                      consts = lambda, factor = factor, data = data, load.var = load.var, lower = lower, upper = upper,
-                      model = model, est = FALSE, lik = TRUE, delta = FALSE, derivs = FALSE, nAGQ = nAGQ)
-
-
-  # value 1
-  Est <- opt.result$par
-  if (length(opt.result$par) > 0) {
-    cov.mat <- solve(opt.result$hessian)
+  if (length(init.tot) > 0) {
+    opt.result <- optimx::optimx(par = init.tot, fn = La.load, hessian = TRUE, method = method, control = opt.control,
+                          consts = lambda, factor = factor, data = data, load.var = load.var, lower = lower, upper = upper,
+                          model = model, est = FALSE, lik = TRUE, delta = FALSE, derivs = FALSE, nAGQ = nAGQ)
+    # value 1
+    Est <- coef(opt.result)[1, ]
+    final.lik <- (opt.result[1, "value"]) * (-1)
+    #cov.mat <- solve(opt.result$hessian)
+    hess <- attr(opt.result, "details")[[3]]
+    cov.mat <- solve(hess)
     st.er <- sqrt(diag(cov.mat))
     table <- cbind(Est,st.er)
+    code <- opt.result[1, "convcode"]
   }
   else {
+    opt.result <- optim(par = init.tot, fn = La.load, hessian = TRUE, method = "L-BFGS-B", control = opt.control,
+                         consts = lambda, factor = factor, data = data, load.var = load.var, lower = lower, upper = upper,
+                         model = model, est = FALSE, lik = TRUE, delta = FALSE, derivs = FALSE, nAGQ = nAGQ)
+    final.lik <- (opt.result$value) * (-1)
+    Est <- opt.result$par
     table <- Est
     cov.mat <- NULL
+    code <- opt.result$convergence
+    method <- NA
   }
 
 
-  final.lik <- (opt.result$value) * (-1)
   tot.est.par <- length(Est)
   total.iters <- iter.counter.global
 
-  # value 3
-  code <- opt.result$convergence
 
   assign('stop.iter.counter', 1, inherits = TRUE)
 
   # value 4
   if (est == TRUE) {
-    final.model <- La.load(start = opt.result$par, consts = lambda, data = data,
+    final.model <- La.load(start = Est, consts = lambda, data = data,
                            factor = factor, load.var = load.var, model = model,
                            est = TRUE, lik = FALSE, nAGQ = nAGQ)
 
@@ -720,7 +747,7 @@ PLmixed <- function(formula, data, family = gaussian, load.var = NULL, lambda = 
 
     final.object <- list("Log-Likelihood" = final.lik, "Fixed Effects" = fix, "Random Effects" = rand.ef, "Lambda" = fin.lam,
                          "nlp" = nlp.tab, "Cov Matrix" = cov.mat, "Error code" = code, "Total Iterations" = total.iters,
-                         "lme4 Model"= final, "Iteration Summary" = iter.summary, "Model" = model, "Family" = family(final),
+                         "lme4"= final, "Iteration Summary" = iter.summary, "Model" = model, "Family" = family(final),
                          "Data" = deparse(substitute(data)), "Load.Var" = load.var, "Factor" = factor, "nAGQ" = nAGQ,
                          "Lambda.raw" = new.lambda, "Param" = c(nlp.Est, Est), "Estimation Time" = total.estimation.time, "REML" = reml,
                          "Optimizer" = optimizers, "nlp.vars" = nlp)

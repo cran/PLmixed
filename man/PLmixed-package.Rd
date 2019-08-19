@@ -6,9 +6,17 @@
 \title{PLmixed: A package for estimating GLMMs with factor structures.}
 \description{
 The \code{PLmixed} package's main function is \code{\link{PLmixed}}, which estimates
-the model through nested maximizations using the \pkg{\link{lme4}} package
-and \code{\link{optim}} function. This extends the capabilities of \pkg{\link{lme4}}
+the model through nested maximizations using the \pkg{\link{lme4}} and \pkg{\link{optimx}} packages
+(previously the \code{\link{optim}} function). This extends the capabilities of \pkg{\link{lme4}}
 to allow for estimated factor structures, making it useful for estimating multilevel
 factor analysis and item response theory models with an arbitrary number of hierarchical
 levels or crossed random effects.
+}
+\references{
+Rockwood, N. J., & Jeon, M. (2019). Estimating complex measurement and growth models
+using the R package PLmixed.\emph{Multivariate Behavioral Research, 54}(2), 288-306.
+
+Jeon, M., & Rabe-Hesketh, S. (2012). Profile-likelihood approach for estimating
+generalized linear mixed models with factor structures. \emph{Journal of Educational
+and Behavioral Statistics, 37}(4), 518-542.
 }

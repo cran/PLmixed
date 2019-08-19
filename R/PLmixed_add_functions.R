@@ -11,21 +11,21 @@
 #'
 
 summary.PLmod <- function(object, ...){
-  details <- list("nobs" = nobs(object$'lme4 Model'),
-                  "ngrps" = ngrps(object$'lme4 Model'))
+  details <- list("nobs" = nobs(object$'lme4'),
+                  "ngrps" = ngrps(object$'lme4'))
   if (object$'REML' == F){
-    fit.stat <- list("AIC" = AIC(object$'lme4 Model') + 2*length(object$'Param'),
-                     "BIC" = (BIC(object$'lme4 Model')
-                              + length(object$'Param')*(log(nobs(object$'lme4 Model')))),
+    fit.stat <- list("AIC" = AIC(object$'lme4') + 2*length(object$'Param'),
+                     "BIC" = (BIC(object$'lme4')
+                              + length(object$'Param')*(log(nobs(object$'lme4')))),
                      "logLik" = object$'Log-Likelihood',
-                     "deviance" = deviance(object$'lme4 Model'),
-                     "df.resid" = df.residual(object$'lme4 Model') - length(object$'Param'))
+                     "deviance" = deviance(object$'lme4'),
+                     "df.resid" = df.residual(object$'lme4') - length(object$'Param'))
   }
   else{
-    fit.stat <- list("REML" = lme4::REMLcrit(object$'lme4 Model')[1])
+    fit.stat <- list("REML" = lme4::REMLcrit(object$'lme4')[1])
   }
   return.object <- list("Formula" = Reduce(paste, deparse(object$'Model')),
-                        "Family" = family(object$'lme4 Model'),
+                        "Family" = family(object$'lme4'),
                         "Data" = object$'Data',
                         "Fit" = fit.stat,
                         "Optim Iterations" = object$'Total Iterations',
@@ -79,7 +79,9 @@ print.summary.PLmod <- function(x, digits = 4, ...){
     for (i in 1:length(object$'Lambda')){
       lam <- as.data.frame(object$'Lambda'[[i]])
       cat("Lambda: ", object$'load.var'[i], "\n")
-      print(lam, digits = digits)
+      lam <- as.matrix(lam)
+      lam[lam == 0] <- NA
+      print(lam, digits = digits, zero.print = ".", na.print = ".")
       cat("\n")
     }
   }
@@ -116,17 +118,17 @@ print.PLmod <- function(x, digits = 4, ...){
   cat("Profile-based Mixed Effect Model Fit With PLmixed Using lme4 \n")
   cat("Formula: ", Reduce(paste, deparse(object$'Model')), "\n")
   cat("Data: ", object$'Data', "\n")
-  .prt.family(family(object$'lme4 Model'))
+  .prt.family(family(object$'lme4'))
   if (object$'REML' == F){
-    fit.stat <- list("AIC" = AIC(object$'lme4 Model') + 2*length(object$'Param'),
-                     "BIC" = (BIC(object$'lme4 Model')
-                              + length(object$'Param')*(log(nobs(object$'lme4 Model')) - log(2*pi))),
+    fit.stat <- list("AIC" = AIC(object$'lme4') + 2*length(object$'Param'),
+                     "BIC" = (BIC(object$'lme4')
+                              + length(object$'Param')*(log(nobs(object$'lme4')) - log(2*pi))),
                      "logLik" = object$'Log-Likelihood',
-                     "deviance" = deviance(object$'lme4 Model'),
-                     "df.resid" = df.residual(object$'lme4 Model') - 2*length(object$'Param'))
+                     "deviance" = deviance(object$'lme4'),
+                     "df.resid" = df.residual(object$'lme4') - 2*length(object$'Param'))
   }
   else{
-    fit.stat <- list("REML" = REMLcrit(object$'lme4 Model')[1])
+    fit.stat <- list("REML" = REMLcrit(object$'lme4')[1])
   }
   aictab <- unlist(fit.stat)
   .prt.aictab(aictab, digits = 2)
@@ -153,7 +155,7 @@ print.PLmod <- function(x, digits = 4, ...){
 #' @export
 
 coef.PLmod <- function(object,...){
-  coef(object$'lme4 Model',...)
+  coef(object$'lme4',...)
 }
 
 #####
@@ -168,7 +170,7 @@ coef.PLmod <- function(object,...){
 #' @export
 
 residuals.PLmod <- function(object,...){
-  residuals(object$'lme4 Model',...)
+  residuals(object$'lme4',...)
 }
 
 #####
@@ -183,7 +185,7 @@ residuals.PLmod <- function(object,...){
 #' @export
 
 ranef.PLmod <- function(object,...){
-  lme4::ranef(object$'lme4 Model',...)
+  lme4::ranef(object$'lme4',...)
 }
 
 #####
@@ -198,7 +200,7 @@ ranef.PLmod <- function(object,...){
 #' @export
 
 fixef.PLmod <- function(object,...){
-  lme4::fixef(object$'lme4 Model',...)
+  lme4::fixef(object$'lme4',...)
 }
 
 #####
@@ -214,7 +216,7 @@ fixef.PLmod <- function(object,...){
 #'
 
 fitted.PLmod <- function(object,...){
-  fitted(object$'lme4 Model',...)
+  fitted(object$'lme4',...)
 }
 
 #####
@@ -229,7 +231,7 @@ fitted.PLmod <- function(object,...){
 #'
 
 simulate.PLmod <- function(object,...){
-  simulate(object$'lme4 Model',...)
+  simulate(object$'lme4',...)
 }
 
 #####
@@ -248,7 +250,7 @@ simulate.PLmod <- function(object,...){
 predict.PLmod <- function(object, newdata = NULL,...){
 
   if (is.null(newdata) == T){
-    predict(object$'lme4 Model',...)
+    predict(object$'lme4',...)
   }
   else{
     obs <- newdata
@@ -318,7 +320,7 @@ predict.PLmod <- function(object, newdata = NULL,...){
     # }
 
 
-    predict(object$'lme4 Model', newdata = obs, ...)
+    predict(object$'lme4', newdata = obs, ...)
   }
 }
 
@@ -335,7 +337,7 @@ predict.PLmod <- function(object, newdata = NULL,...){
 
 plot.PLmod <- function(x,...){
   object <- x
-  plot(object$'lme4 Model',...)
+  plot(object$'lme4',...)
 }
 
 #####
@@ -385,8 +387,8 @@ iterPlot <- function(object){
        object$'Iteration Summary'$'Time', type = 'l', ylim = c(0, max(object$'Iteration Summary'$'Time')),
        xlab = "Iteration", ylab = "Iteration Time (s)")
 
-  predictions <- predict(object$'lme4 Model')
-  residuals <- residuals(object$'lme4 Model')
+  predictions <- predict(object$'lme4')
+  residuals <- residuals(object$'lme4')
   plot(predictions, residuals, cex = .5, xlab = "Fitted", ylab = "Residual")
   par(mfrow = c(1, 1))
 }

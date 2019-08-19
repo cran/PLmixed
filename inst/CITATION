@@ -1,0 +1,19 @@
+
+bibentry(bibtype = "Article",
+  title        = "Estimating Complex Measurement and Growth Models Using the {R} Package {PLmixed}",
+  author       = c(person(given = "Nicholas",
+                          family = "Rockwood"),
+                   person(given = "Minjeong",
+                          family = "Jeon")),
+  journal      = "Multivariate Behavioral Research",
+  year         = "2019",
+  volume       = "54",
+  number       = "2",
+  pages        = "288--306",
+
+  header       = "To cite PLmixed in publications use:",
+  textVersion  =
+  paste("Rockwood, N. J., & Jeon, M. (2019).",
+        "Estimating complex measurement and growth models using the R package PLmixed.",
+        "Multivariate Behavioral Research, 54(2), 288-306.")
+)
