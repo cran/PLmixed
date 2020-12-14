@@ -205,6 +205,9 @@ PLmixed <- function(formula, data, family = gaussian, load.var = NULL, lambda = 
   stop.iter.counter <- NULL
   model <- formula
 
+  df.name <- deparse(substitute(data))
+  if(inherits(data, "tbl_df")) data <- as.data.frame(data)
+
   # For Iteration Summary
   ll.list.global <- NULL
   lambda.est.global <- NULL
@@ -748,7 +751,7 @@ PLmixed <- function(formula, data, family = gaussian, load.var = NULL, lambda = 
     final.object <- list("Log-Likelihood" = final.lik, "Fixed Effects" = fix, "Random Effects" = rand.ef, "Lambda" = fin.lam,
                          "nlp" = nlp.tab, "Cov Matrix" = cov.mat, "Error code" = code, "Total Iterations" = total.iters,
                          "lme4"= final, "Iteration Summary" = iter.summary, "Model" = model, "Family" = family(final),
-                         "Data" = deparse(substitute(data)), "Load.Var" = load.var, "Factor" = factor, "nAGQ" = nAGQ,
+                         "Data" = df.name, "Load.Var" = load.var, "Factor" = factor, "nAGQ" = nAGQ,
                          "Lambda.raw" = new.lambda, "Param" = c(nlp.Est, Est), "Estimation Time" = total.estimation.time, "REML" = reml,
                          "Optimizer" = optimizers, "nlp.vars" = nlp)
 

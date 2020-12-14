@@ -4,7 +4,8 @@
 \name{KYPSitemsim}
 \alias{KYPSitemsim}
 \title{Simulated KYPS item-level dataset.}
-\format{A data frame with 66947 rows and 6 variables:
+\format{
+A data frame with 66947 rows and 6 variables:
 \describe{
   \item{id}{Student ID}
   \item{time}{Time Identifier}
@@ -12,7 +13,8 @@
   \item{mid}{Middle School ID}
   \item{hid}{High School ID}
   \item{response}{Item Response}
-}}
+}
+}
 \usage{
 KYPSitemsim
 }

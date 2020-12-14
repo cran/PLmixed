@@ -4,7 +4,8 @@
 \name{JUDGEsim}
 \alias{JUDGEsim}
 \title{Simulated Multi-rater Multi-response dataset.}
-\format{A data frame with 54462 rows and 7 variables:
+\format{
+A data frame with 54462 rows and 7 variables:
 \describe{
   \item{item}{Item ID}
   \item{method}{1 = teacher response, 2 = student response}
@@ -13,7 +14,8 @@
   \item{class}{Classroom ID}
   \item{tch}{Teacher ID}
   \item{response}{Item response}
-}}
+}
+}
 \usage{
 JUDGEsim
 }

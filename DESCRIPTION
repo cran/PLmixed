@@ -1,7 +1,7 @@
 Package: PLmixed
 Title: Estimate (Generalized) Linear Mixed Models with Factor
         Structures
-Version: 0.1.4
+Version: 0.1.5
 Authors@R: c(person("Minjeong", "Jeon", role = "aut"),
     person("Nicholas", "Rockwood", email = "nrockwood@llu.edu", role = c("aut", "cre")))
 Description: Utilizes the 'lme4' and 'optimx' packages (previously the optim()
@@ -19,11 +19,11 @@ VignetteBuilder: knitr
 Encoding: UTF-8
 License: GPL (>= 2)
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
 NeedsCompilation: no
-Packaged: 2019-08-19 15:07:45 UTC; nickrockwood
+Packaged: 2020-12-13 20:55:18 UTC; nicholasrockwood
 Author: Minjeong Jeon [aut],
   Nicholas Rockwood [aut, cre]
 Maintainer: Nicholas Rockwood <nrockwood@llu.edu>
 Repository: CRAN
-Date/Publication: 2019-08-19 18:00:11 UTC
+Date/Publication: 2020-12-14 05:20:02 UTC

@@ -4,13 +4,31 @@
 \alias{PLmixed}
 \title{Fit GLMM with Factor Structure}
 \usage{
-PLmixed(formula, data, family = gaussian, load.var = NULL,
-  lambda = NULL, factor = NULL, init = 1, nlp = NULL,
-  init.nlp = 1, nAGQ = 1, method = "L-BFGS-B", lower = -Inf,
-  upper = Inf, lme4.optimizer = "bobyqa", lme4.start = NULL,
-  lme4.optCtrl = list(), opt.control = NULL, REML = FALSE, SE = 1,
-  ND.method = "simple", check = "stop", est = TRUE,
-  iter.count = TRUE)
+PLmixed(
+  formula,
+  data,
+  family = gaussian,
+  load.var = NULL,
+  lambda = NULL,
+  factor = NULL,
+  init = 1,
+  nlp = NULL,
+  init.nlp = 1,
+  nAGQ = 1,
+  method = "L-BFGS-B",
+  lower = -Inf,
+  upper = Inf,
+  lme4.optimizer = "bobyqa",
+  lme4.start = NULL,
+  lme4.optCtrl = list(),
+  opt.control = NULL,
+  REML = FALSE,
+  SE = 1,
+  ND.method = "simple",
+  check = "stop",
+  est = TRUE,
+  iter.count = TRUE
+)
 }
 \arguments{
 \item{formula}{A formula following that of \pkg{\link{lme4}}, with the addition that factors can be specified

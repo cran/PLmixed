@@ -4,13 +4,15 @@
 \name{IRTsim}
 \alias{IRTsim}
 \title{Simulated multilevel IRT dataset.}
-\format{A data frame with 2500 rows and 4 variables:
+\format{
+A data frame with 2500 rows and 4 variables:
 \describe{
   \item{sid}{Student ID}
   \item{school}{School ID}
   \item{item}{Item ID}
   \item{y}{Response}
-}}
+}
+}
 \usage{
 IRTsim
 }

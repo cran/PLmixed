@@ -4,14 +4,16 @@
 \name{KYPSsim}
 \alias{KYPSsim}
 \title{Simulated KYPS dataset.}
-\format{A data frame with 11494 rows and 5 variables:
+\format{
+A data frame with 11494 rows and 5 variables:
 \describe{
   \item{mid}{Middle School ID}
   \item{hid}{High School ID}
   \item{sid}{Student ID}
   \item{time}{Time Identifier}
   \item{esteem}{Self Esteem}
-}}
+}
+}
 \usage{
 KYPSsim
 }
