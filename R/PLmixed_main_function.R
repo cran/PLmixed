@@ -656,7 +656,7 @@ PLmixed <- function(formula, data, family = gaussian, load.var = NULL, lambda = 
     ### Organize Output
 
     cat('\r', "                                 ","\n")
-    if (class(final) == "lmerMod"){
+    if (inherits(final, "lmerMod")){
       fix <- cbind(beta, adj.se.b, beta/adj.se.b)
       colnames(fix) <- c("Beta", "SE", "t value")
     }
@@ -732,11 +732,11 @@ PLmixed <- function(formula, data, family = gaussian, load.var = NULL, lambda = 
     }
 
 
-    if (class(final) == "lmerMod"){
-      reml = REML
+    if (inherits(final, "lmerMod")){
+      reml <- REML
     }
     else{
-      reml = FALSE
+      reml <- FALSE
     }
     optimizers <- list("lme4 Optimizer" = lme4.optimizer, "Optim Optimizer" = method)
 
