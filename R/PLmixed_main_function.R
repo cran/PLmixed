@@ -708,8 +708,10 @@ PLmixed <- function(formula, data, family = gaussian, load.var = NULL, lambda = 
         colnames(final.lambda) <- comb
 
 
-        for(i in 1:nrow(as.matrix(lambda.1))){
-          for (j in 1:ncol(as.matrix(lambda.1))){
+        #for(i in 1:nrow(as.matrix(lambda.1))){
+        #  for (j in 1:ncol(as.matrix(lambda.1))){
+        for (j in 1:ncol(as.matrix(lambda.1))){
+          for(i in 1:nrow(as.matrix(lambda.1))){
             if(is.na(lambda.1[i, j]) == 1){
               final.lambda[i, (j * 2 - 1)] <- Est[fill]
               final.lambda[i, j * 2] <- st.er[fill]
